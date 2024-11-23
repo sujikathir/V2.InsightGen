@@ -19,6 +19,8 @@ import {
   Pie,
   Cell
 } from 'recharts';
+import { motion } from "framer-motion";
+import { Legend } from 'recharts';
 
 const FinanceService = () => {
   const [selectedTool, setSelectedTool] = useState('chat');
@@ -55,22 +57,22 @@ const FinanceService = () => {
 
   // Sample data for charts
   const revenueData = [
-    { name: 'Jan', value: 4000 },
-    { name: 'Feb', value: 3000 },
-    { name: 'Mar', value: 2000 },
-    { name: 'Apr', value: 2780 },
-    { name: 'May', value: 1890 },
-    { name: 'Jun', value: 2390 },
+    { name: 'Jan', value: 40000 },
+    { name: 'Feb', value: 45000 },
+    { name: 'Mar', value: 42000 },
+    { name: 'Apr', value: 47800 },
+    { name: 'May', value: 51890 },
+    { name: 'Jun', value: 55390 },
   ];
 
   const expenseData = [
-    { name: 'Operations', value: 400 },
-    { name: 'Marketing', value: 300 },
-    { name: 'Payroll', value: 300 },
-    { name: 'Tools', value: 200 },
+    { name: 'Operations', value: 25000 },
+    { name: 'Marketing', value: 15000 },
+    { name: 'Payroll', value: 35000 },
+    { name: 'Tools', value: 10000 },
   ];
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
   const handleCalculation = () => {
     // Implement calculation logic based on calculatorType
@@ -176,262 +178,277 @@ const FinanceService = () => {
   };
 
   return (
-    <div className="flex-1 h-full bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="max-w-7xl mx-auto p-6">
-        <div className="flex items-center space-x-3 mb-8">
-          <DollarSign className="w-8 h-8 text-primary" />
-          <h1 className="text-3xl font-bold text-gray-900">Financial Advisory</h1>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center space-x-4 mb-8"
+        >
+          <div className="p-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-500">
+            <DollarSign className="w-8 h-8 text-white" />
+          </div>
+          <div>
+            <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+              Financial Advisory
+            </h1>
+            <p className="text-gray-600 mt-1">Monitor and manage your business finances</p>
+          </div>
+        </motion.div>
 
         <div className="grid grid-cols-12 gap-6">
           {/* Main Content Area */}
-          <div className="col-span-12 lg:col-span-8">
-            <Tabs defaultValue="dashboard" className="h-full space-y-6">
-              <TabsList>
-                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                <TabsTrigger value="chat">AI Advisor</TabsTrigger>
-                <TabsTrigger value="calculators">Financial Tools</TabsTrigger>
-                <TabsTrigger value="reports">Reports</TabsTrigger>
-              </TabsList>
+          <div className="col-span-12 lg:col-span-8 space-y-6">
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-6">
+                <Tabs defaultValue="dashboard" className="space-y-6">
+                  <TabsList className="w-full justify-start bg-gradient-to-r from-blue-500/10 to-purple-500/10 p-1">
+                    <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+                    <TabsTrigger value="chat">AI Advisor</TabsTrigger>
+                    <TabsTrigger value="calculators">Financial Tools</TabsTrigger>
+                    <TabsTrigger value="reports">Reports</TabsTrigger>
+                  </TabsList>
 
-              <TabsContent value="dashboard">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Revenue Trend */}
-                  <Card className="col-span-2">
-                    <CardHeader>
-                      <CardTitle>Revenue Trend</CardTitle>
-                    </CardHeader>
-                    <CardContent className="h-[300px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RechartsLineChart data={revenueData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" />
-                          <YAxis />
-                          <Tooltip />
-                          <Line type="monotone" dataKey="value" stroke="#8884d8" />
-                        </RechartsLineChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
+                  <TabsContent value="dashboard" className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Revenue Trend */}
+                      <Card className="col-span-2">
+                        <CardHeader>
+                          <CardTitle>Revenue Trend</CardTitle>
+                        </CardHeader>
+                        <CardContent className="h-[300px]">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <RechartsLineChart data={revenueData}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis dataKey="name" />
+                              <YAxis />
+                              <Tooltip />
+                              <Line type="monotone" dataKey="value" stroke="#8884d8" />
+                            </RechartsLineChart>
+                          </ResponsiveContainer>
+                        </CardContent>
+                      </Card>
 
-                  {/* Expense Breakdown */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Expense Breakdown</CardTitle>
-                    </CardHeader>
-                    <CardContent className="h-[300px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RechartsPieChart>
-                          <Pie
-                            data={expenseData}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            outerRadius={80}
-                            fill="#8884d8"
-                            dataKey="value"
-                          >
-                            {expenseData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                        </RechartsPieChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
+                      {/* Expense Breakdown */}
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Expense Breakdown</CardTitle>
+                        </CardHeader>
+                        <CardContent className="h-[300px]">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <RechartsPieChart>
+                              <Pie
+                                data={expenseData}
+                                cx="50%"
+                                cy="50%"
+                                labelLine={false}
+                                outerRadius={80}
+                                fill="#8884d8"
+                                dataKey="value"
+                              >
+                                {expenseData.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                              </Pie>
+                              <Tooltip />
+                            </RechartsPieChart>
+                          </ResponsiveContainer>
+                        </CardContent>
+                      </Card>
 
-                  {/* Financial Health Score */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Financial Health Score</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-center">
-                        <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-green-100">
-                          <span className="text-3xl font-bold text-green-600">85</span>
-                        </div>
-                        <div className="mt-4 space-y-2">
-                          <p className="text-sm text-gray-600">Your business is financially healthy</p>
-                          <Button variant="outline" size="sm">View Details</Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="chat">
-                <Card className="h-[600px] flex flex-col">
-                  <CardContent className="flex-1 overflow-auto p-4">
-                    <div className="space-y-4">
-                      {messages.map((message, index) => (
-                        <div key={index} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`rounded-lg p-4 max-w-[80%] ${
-                            message.type === 'user' 
-                              ? 'bg-primary text-primary-foreground' 
-                              : 'bg-secondary'
-                          }`}>
-                            <p className="whitespace-pre-line">{message.content}</p>
+                      {/* Financial Health Score */}
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Financial Health Score</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-center">
+                            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-green-100">
+                              <span className="text-3xl font-bold text-green-600">85</span>
+                            </div>
+                            <div className="mt-4 space-y-2">
+                              <p className="text-sm text-gray-600">Your business is financially healthy</p>
+                              <Button variant="outline" size="sm">View Details</Button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        </CardContent>
+                      </Card>
                     </div>
-                  </CardContent>
-                  <div className="p-4 border-t">
-                    <div className="flex space-x-2">
-                      <Input
-                        value={inputMessage}
-                        onChange={(e) => setInputMessage(e.target.value)}
-                        placeholder="Ask about finances, taxes, ROI..."
-                        onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                      />
-                      <Button onClick={handleSend}>Send</Button>
-                    </div>
-                  </div>
-                </Card>
-              </TabsContent>
+                  </TabsContent>
 
-              <TabsContent value="calculators">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Financial Calculators</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <Select value={calculatorType} onValueChange={setCalculatorType}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select calculator" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="roi">ROI Calculator</SelectItem>
-                            <SelectItem value="tax">Tax Calculator</SelectItem>
-                            <SelectItem value="loan">Loan Calculator</SelectItem>
-                            <SelectItem value="payroll">Payroll Calculator</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {renderCalculator()}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Results</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {/* Calculator results will be displayed here */}
-                        <div className="text-center p-6">
-                          <p className="text-2xl font-bold text-primary">
-                            {handleCalculation().result}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {handleCalculation().label}
-                          </p>
+                  <TabsContent value="chat">
+                    <Card className="h-[600px] flex flex-col">
+                      <CardContent className="flex-1 overflow-auto p-4">
+                        <div className="space-y-4">
+                          {messages.map((message, index) => (
+                            <div key={index} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                              <div className={`rounded-lg p-4 max-w-[80%] ${
+                                message.type === 'user' 
+                                  ? 'bg-primary text-primary-foreground' 
+                                  : 'bg-secondary'
+                              }`}>
+                                <p className="whitespace-pre-line">{message.content}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                      <div className="p-4 border-t">
+                        <div className="flex space-x-2">
+                          <Input
+                            value={inputMessage}
+                            onChange={(e) => setInputMessage(e.target.value)}
+                            placeholder="Ask about finances, taxes, ROI..."
+                            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                          />
+                          <Button onClick={handleSend}>Send</Button>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
+                    </Card>
+                  </TabsContent>
 
-              <TabsContent value="reports">
-                <div className="space-y-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Financial Reports</CardTitle>
-                      <CardDescription>
-                        Generate and download financial reports
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <Button variant="outline" className="h-24">
-                            <div className="text-center">
-                              <FileText className="w-6 h-6 mx-auto mb-2" />
-                              <span>Income Statement</span>
-                            </div>
-                          </Button>
-                          <Button variant="outline" className="h-24">
-                            <div className="text-center">
-                              <Receipt className="w-6 h-6 mx-auto mb-2" />
-                              <span>Balance Sheet</span>
-                            </div>
-                          </Button>
-                          <Button variant="outline" className="h-24">
-                            <div className="text-center">
-                              <TrendingUp className="w-6 h-6 mx-auto mb-2" />
-                              <span>Cash Flow</span>
-                            </div>
-                          </Button>
-                          <Button variant="outline" className="h-24">
-                            <div className="text-center">
-                              <PieChart className="w-6 h-6 mx-auto mb-2" />
-                              <span>Tax Report</span>
-                            </div>
-                          </Button>
-                        </div>
-                      </div>
-                      <Alert className="mt-6">
-                        <AlertCircle className="w-4 h-4" />
-                        <AlertDescription>
-                          Reports are generated in PDF format and include detailed analysis and recommendations.
-                        </AlertDescription>
-                      </Alert>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Custom Report Builder</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">Report Type</label>
-                            <Select>
+                  <TabsContent value="calculators">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Financial Calculators</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            <Select value={calculatorType} onValueChange={setCalculatorType}>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select report type" />
+                                <SelectValue placeholder="Select calculator" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="financial">Financial Analysis</SelectItem>
-                                <SelectItem value="tax">Tax Summary</SelectItem>
-                                <SelectItem value="forecast">Financial Forecast</SelectItem>
-                                <SelectItem value="budget">Budget Analysis</SelectItem>
+                                <SelectItem value="roi">ROI Calculator</SelectItem>
+                                <SelectItem value="tax">Tax Calculator</SelectItem>
+                                <SelectItem value="loan">Loan Calculator</SelectItem>
+                                <SelectItem value="payroll">Payroll Calculator</SelectItem>
                               </SelectContent>
                             </Select>
+                            {renderCalculator()}
                           </div>
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">Time Period</label>
-                            <Select>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select time period" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="monthly">Monthly</SelectItem>
-                                <SelectItem value="quarterly">Quarterly</SelectItem>
-                                <SelectItem value="yearly">Yearly</SelectItem>
-                                <SelectItem value="custom">Custom Range</SelectItem>
-                              </SelectContent>
-                            </Select>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Results</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            {/* Calculator results will be displayed here */}
+                            <div className="text-center p-6">
+                              <p className="text-2xl font-bold text-primary">
+                                {handleCalculation().result}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {handleCalculation().label}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                        <Button className="w-full">Generate Custom Report</Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-            </Tabs>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="reports">
+                    <div className="space-y-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Financial Reports</CardTitle>
+                          <CardDescription>
+                            Generate and download financial reports
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <Button variant="outline" className="h-24">
+                                <div className="text-center">
+                                  <FileText className="w-6 h-6 mx-auto mb-2" />
+                                  <span>Income Statement</span>
+                                </div>
+                              </Button>
+                              <Button variant="outline" className="h-24">
+                                <div className="text-center">
+                                  <Receipt className="w-6 h-6 mx-auto mb-2" />
+                                  <span>Balance Sheet</span>
+                                </div>
+                              </Button>
+                              <Button variant="outline" className="h-24">
+                                <div className="text-center">
+                                  <TrendingUp className="w-6 h-6 mx-auto mb-2" />
+                                  <span>Cash Flow</span>
+                                </div>
+                              </Button>
+                              <Button variant="outline" className="h-24">
+                                <div className="text-center">
+                                  <PieChart className="w-6 h-6 mx-auto mb-2" />
+                                  <span>Tax Report</span>
+                                </div>
+                              </Button>
+                            </div>
+                          </div>
+                          <Alert className="mt-6">
+                            <AlertCircle className="w-4 h-4" />
+                            <AlertDescription>
+                              Reports are generated in PDF format and include detailed analysis and recommendations.
+                            </AlertDescription>
+                          </Alert>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Custom Report Builder</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium">Report Type</label>
+                                <Select>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select report type" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="financial">Financial Analysis</SelectItem>
+                                    <SelectItem value="tax">Tax Summary</SelectItem>
+                                    <SelectItem value="forecast">Financial Forecast</SelectItem>
+                                    <SelectItem value="budget">Budget Analysis</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium">Time Period</label>
+                                <Select>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select time period" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="monthly">Monthly</SelectItem>
+                                    <SelectItem value="quarterly">Quarterly</SelectItem>
+                                    <SelectItem value="yearly">Yearly</SelectItem>
+                                    <SelectItem value="custom">Custom Range</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            <Button className="w-full">Generate Custom Report</Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Quick Actions Sidebar */}
           <div className="col-span-12 lg:col-span-4 space-y-6">
-            <Card>
+            <Card className="border-0 shadow-lg">
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
@@ -456,7 +473,7 @@ const FinanceService = () => {
             </Card>
 
             {/* Financial Insights Card */}
-            <Card>
+            <Card className="border-0 shadow-lg">
               <CardHeader>
                 <CardTitle>Financial Insights</CardTitle>
               </CardHeader>

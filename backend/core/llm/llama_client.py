@@ -1,24 +1,29 @@
-# backend/core/llm/llama_client.py 
-
 import logging
 from typing import List, Dict, Any
-from llama_cpp import Llama
+from groq import AsyncGroq
+import os
+from dotenv import load_dotenv
+import json
 
 logger = logging.getLogger(__name__)
+load_dotenv()
 
 class LlamaClient:
     def __init__(self):
-        self.model = Llama(
-            model_path="path/to/your/llama/model.gguf",
-            n_ctx=32768,  # Adjust context window as needed
-            n_threads=4   # Adjust based on your CPU
-        )
-
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            raise ValueError("GROQ_API_KEY environment variable is not set")
+        self.client = AsyncGroq(api_key=api_key)
+        self.model = "llama3-70b-8192"  # Using a more powerful model if available
+        
     async def get_completion(
         self,
         prompt: str,
         system_prompt: str = "",
-        temperature: float = 0.7
+        temperature: float = 0.7,
+        max_tokens: int = 256,
+        top_p: float = 0.9,
+        timeout: float = 10.0
     ) -> str:
         try:
             messages = []
@@ -33,14 +38,114 @@ class LlamaClient:
                 "content": prompt
             })
 
-            response = self.model.create_chat_completion(
+            response = await self.client.chat.completions.create(
+                model=self.model,
                 messages=messages,
                 temperature=temperature,
-                max_tokens=2000
+                max_tokens=max_tokens,
+                top_p=top_p,
+                timeout=timeout
             )
             
+            if not response.choices:
+                raise ValueError("No response received from LLM")
+                
             return response.choices[0].message.content
             
         except Exception as e:
             logger.error(f"Error getting LLM response: {e}")
             raise
+
+    async def generate_sql(
+        self,
+        question: str,
+        schema: dict,
+        temperature: float = 0.1
+    ) -> str:
+        """Specific method for SQL generation with appropriate parameters"""
+        try:
+            # Format schema for better prompt understanding
+            schema_str = self._format_schema_for_prompt(schema)
+            
+            prompt = f"""Given the following database schema:
+{schema_str}
+
+Generate a SQL SELECT query to answer this question: {question}
+
+IMPORTANT RULES:
+1. Return ONLY the SQL query without any explanations or additional text
+2. Start with SELECT
+3. Use proper table aliases (e.g., 'table_name AS t')
+4. Include appropriate JOINs based on the foreign key relationships shown
+5. Use only tables and columns that exist in the schema above
+6. Add LIMIT 100 if the query might return many rows
+7. End with a semicolon
+8. Use proper SQL formatting and indentation"""
+
+            messages = [
+                {
+                    "role": "system",
+                    "content": "You are a SQL expert. Generate only SQL queries without any explanation. Never include markdown formatting in your response."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=512,  # Increased for complex queries
+                top_p=0.9,
+                timeout=10.0
+            )
+            
+            sql = response.choices[0].message.content.strip()
+            
+            # Clean up the response
+            sql = self._clean_sql_response(sql)
+            
+            return sql
+            
+        except Exception as e:
+            logger.error(f"Error generating SQL: {e}")
+            raise
+
+    def _format_schema_for_prompt(self, schema: dict) -> str:
+        """Format schema in a clear, readable way for the LLM"""
+        formatted = []
+        for table_name, table_info in schema.items():
+            formatted.append(f"Table: {table_name}")
+            formatted.append("Columns:")
+            for col_name, col_info in table_info['columns'].items():
+                col_desc = f"  - {col_name} ({col_info['type']})"
+                if col_info.get('primary_key'):
+                    col_desc += " [PRIMARY KEY]"
+                if col_info.get('foreign_keys'):
+                    col_desc += f" [FOREIGN KEY -> {col_info['foreign_keys'][0]}]"
+                formatted.append(col_desc)
+            formatted.append("")  # Empty line between tables
+        
+        return "\n".join(formatted)
+
+    def _clean_sql_response(self, sql: str) -> str:
+        """Clean up the SQL response from the LLM"""
+        # Remove any markdown formatting if present
+        if '```sql' in sql:
+            sql = sql.split('```sql')[1].split('```')[0]
+        elif '```' in sql:
+            sql = sql.split('```')[1]
+            
+        sql = sql.strip()
+        
+        # Ensure it starts with SELECT
+        if not sql.lower().startswith('select'):
+            raise ValueError("Generated SQL must start with SELECT")
+            
+        # Add LIMIT if not present
+        if 'limit' not in sql.lower():
+            sql = f"{sql.rstrip(';')}\nLIMIT 100;"
+            
+        return sql
