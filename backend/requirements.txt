@@ -1,0 +1,41 @@
+# File Path: smallbusiness/backend/requirements.txt
+
+# Core dependencies
+fastapi==0.109.0
+uvicorn==0.27.0
+python-multipart==0.0.6
+python-dotenv==1.0.0
+
+# Database
+motor==3.3.2
+pymongo==4.6.1
+qdrant-client==1.7.3
+motor>=3.3.2
+
+# AI/ML
+transformers==4.37.2
+numpy==1.26.3
+torch>=2.2.0
+
+# LangChain and related packages
+langchain-core>=0.1.27
+langchain-community>=0.0.24
+langchain>=0.1.9
+chromadb>=0.4.22
+sentence-transformers>=2.5.1
+
+# LLM Integration
+groq>=0.3.0
+
+# Document Processing
+PyMuPDF==1.23.22
+pytesseract==0.3.10
+python-docx==1.0.1
+pandas==2.2.0
+pillow==10.2.0
+pyyaml==6.0.1
+unstructured==0.11.8
+easyocr==1.7.1
+spacy==3.7.4
+PyPDF2==3.0.1
+pydantic==2.6.1
