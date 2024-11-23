@@ -37,5 +37,5 @@ pyyaml==6.0.1
 unstructured==0.11.8
 easyocr==1.7.1
 spacy==3.7.4
-PyPDF2==3.0.1
+PyPDF2>=3.0.0
 pydantic==2.6.1

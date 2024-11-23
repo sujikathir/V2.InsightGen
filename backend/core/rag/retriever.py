@@ -8,6 +8,13 @@ import numpy as np
 import os
 from dotenv import load_dotenv
 import logging
+import asyncio
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type
+)
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -15,24 +22,36 @@ load_dotenv()
 class GroqEmbeddings(Embeddings):
     def __init__(self):
         self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
-        self.model = "llama2-70b-4096"
+        self.model = "llama-3.2-1b-preview"
+        self._last_request_time = 0
+        self.min_request_interval = 0.5
 
+    async def _wait_for_rate_limit(self):
+        current_time = asyncio.get_event_loop().time()
+        time_since_last = current_time - self._last_request_time
+        if time_since_last < self.min_request_interval:
+            await asyncio.sleep(self.min_request_interval - time_since_last)
+        self._last_request_time = asyncio.get_event_loop().time()
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_exception_type(Exception)
+    )
     async def _get_embedding(self, text: str) -> List[float]:
         try:
+            await self._wait_for_rate_limit()
+            
             response = await self.client.chat.completions.create(
                 model=self.model,
-                messages=[
-                    {"role": "system", "content": "Generate an embedding vector for the following text:"},
-                    {"role": "user", "content": text}
-                ],
-                temperature=0.0
+                messages=[{"role": "user", "content": text}],
+                temperature=0.0,
+                max_tokens=128,
+                timeout=5.0
             )
-            # Convert the response to a fixed-size vector
-            # This is a simplified approach - you might want to implement a more sophisticated embedding strategy
-            text_response = response.choices[0].message.content
-            # Create a simple hash-based embedding (for demonstration)
-            embedding = self._text_to_vector(text_response)
-            return embedding
+            
+            return response.choices[0].message.content
+            
         except Exception as e:
             logger.error(f"Error getting embedding: {e}")
             raise

@@ -185,29 +185,30 @@ async def analyze_document(document_id: str):
 
 @router.post("/chat")
 async def document_chat(chat_request: ChatRequest):
-    """
-    Chat with a document
-    """
+    """Chat with a document"""
     try:
-        # Get document content first
+        # Get document content
         document = await document_handler.get_document(chat_request.document_id)
         if not document:
             raise HTTPException(status_code=404, detail="Document not found")
 
-        # Extract text content from the document
+        # Extract text content, handling different possible structures
         content = document.get('content', {})
+        text_content = None
+        
         if isinstance(content, dict):
-            text_content = content.get('text', '')
-        else:
-            text_content = str(content)
+            text_content = content.get('text')
+        elif isinstance(content, str):
+            text_content = content
 
         if not text_content:
+            logger.error(f"No text content found in document: {document}")
             raise HTTPException(
                 status_code=400,
                 detail="No text content available for this document"
             )
 
-        # Process chat with document content
+        # Process chat
         response = await chat_service.process_chat(
             query=chat_request.query,
             document_content=text_content,

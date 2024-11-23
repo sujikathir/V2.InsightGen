@@ -31,9 +31,10 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionProps> = ({
     setIsLoading(true);
 
     try {
-      console.log('Connecting with:', formData); // Debug log
+      console.log('Connecting with:', formData);
 
-      const response = await fetch('/api/v1/database/connect', {
+      // Update the API URL to include the base URL
+      const response = await fetch('http://localhost:8000/api/v1/database/connect', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -41,12 +42,12 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionProps> = ({
         body: JSON.stringify(formData)
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.detail || 'Failed to connect');
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to connect');
       }
 
+      const data = await response.json();
       onConnect(data);
     } catch (err) {
       console.error('Connection error:', err);

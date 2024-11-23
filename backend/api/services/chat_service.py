@@ -2,9 +2,9 @@
 from typing import List, Dict, Any
 import logging
 from core.rag.retriever import RAGRetriever
+from core.llm.llama_client import LlamaClient
 import os
 from dotenv import load_dotenv
-from groq import AsyncGroq
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -12,9 +12,8 @@ load_dotenv()
 
 class ChatService:
     def __init__(self):
-        self.groq_client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         self.retriever = RAGRetriever()
-        self.model = "llama2-70b-4096"  # Using Llama through Groq
+        self.llm_client = LlamaClient()
 
     async def process_chat(
         self,
@@ -24,28 +23,46 @@ class ChatService:
         mode: str = "general"
     ) -> Dict[str, Any]:
         """
-        Process a chat message with optional document context
+        Process a chat message with RAG and LLM
         """
         try:
             if chat_history is None:
                 chat_history = []
 
-            # Prepare the prompt based on mode and content
             if mode == "document_chat" and document_content:
-                # Create a prompt that includes document context
-                prompt = f"""Based on the following document content:
+                # First, store document in vector store if not already done
+                document_id = "temp_id"  # You might want to pass this as a parameter
+                await self.retriever.process_document(document_id, document_content)
                 
-                {document_content[:2000]}...
+                # Get relevant chunks for the query
+                relevant_chunks = await self.retriever.get_relevant_chunks(query)
+                
+                # Create context-aware prompt
+                context = "\n\n".join([chunk["content"] for chunk in relevant_chunks])
+                system_prompt = """You are a helpful legal assistant. Use the provided document 
+                context to answer questions accurately. If you cannot find relevant information 
+                in the context, say so."""
+                
+                prompt = f"""Context from document:
+                {context}
                 
                 Question: {query}
-                """
+                
+                Answer based on the context above:"""
             else:
+                system_prompt = """You are a helpful legal assistant. Provide clear, 
+                accurate responses to questions about legal matters."""
                 prompt = query
 
-            # TODO: Implement actual chat processing logic here
-            # For now, return a simple response
+            # Get response from LLM
+            response = await self.llm_client.get_completion(
+                prompt=prompt,
+                system_prompt=system_prompt,
+                temperature=0.7
+            )
+
             return {
-                "answer": f"I understand you're asking about: {query}. Let me analyze that...",
+                "answer": response,
                 "mode": mode,
                 "timestamp": datetime.utcnow().isoformat()
             }
