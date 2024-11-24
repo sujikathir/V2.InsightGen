@@ -3,6 +3,7 @@
 from typing import Dict, List, Any, Optional
 from api.utils.llm_utils import get_llm_response  # Assuming you have this utility
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -63,15 +64,63 @@ class LegalChatbotService(BaseChatbotService):
 
 Remember to always include a disclaimer that you're providing general information, not legal advice."""
 
-    async def process_query(self, query: str, document_content: Optional[str] = None) -> Dict[str, Any]:
-        if document_content:
-            query = f"Document content: {document_content}\n\nUser query: {query}"
-        response = await self._get_response(query, self.system_prompt)
+    async def process_query(self, message: str, context: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            # Check if we have document info in context
+            document_id = context.get('document_id')
+            document_name = context.get('document_name')
+            
+            system_prompt = """You are a legal assistant analyzing documents. 
+            The user has uploaded a document named {document_name}. 
+            Provide analysis and insights about this document.""".format(
+                document_name=document_name or "the uploaded document"
+            )
+
+            # Construct a more informative response
+            initial_response = f"I see you've uploaded {document_name or 'a document'}. "
+            initial_response += "I'll analyze it and answer your questions about its contents. "
+            initial_response += "What specific aspects would you like me to focus on?"
+
+            response = await self._get_response(initial_response, system_prompt)
+
+            return {
+                "answer": response,
+                "insights": self._extract_insights(response),
+                "risks": self._extract_risks(response),
+                "recommendations": self._extract_recommendations(response),
+                "metadata": {
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "document_id": document_id,
+                    "document_name": document_name,
+                    "disclaimer": "This is not legal advice. Please consult with a qualified legal professional."
+                }
+            }
+        except Exception as e:
+            logger.error(f"Error processing query: {e}")
+            raise
+
+    def _extract_insights(self, response: str) -> Dict[str, Any]:
+        """Extract key insights from the response"""
         return {
-            "answer": response,
-            "risks_identified": self._extract_risks(response),
-            "recommendations": self._extract_recommendations(response)
+            "summary": response[:200] + "..." if len(response) > 200 else response,
+            "key_points": []  # You can implement more sophisticated extraction logic
         }
+
+    def _extract_risks(self, response: str) -> List[str]:
+        """Extract potential risks from the response"""
+        # Simple implementation - you can make this more sophisticated
+        return [
+            "This is an AI-generated response and should not be considered legal advice",
+            "Consult with a qualified legal professional for specific guidance"
+        ]
+
+    def _extract_recommendations(self, response: str) -> List[str]:
+        """Extract recommendations from the response"""
+        return [
+            "Review all documents with a qualified legal professional",
+            "Keep detailed records of all legal communications",
+            "Ensure compliance with relevant regulations and laws"
+        ]
 
 class FinanceChatbotService(BaseChatbotService):
     def __init__(self):
