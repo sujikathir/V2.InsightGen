@@ -176,88 +176,96 @@ const FinanceService = () => {
   };
 
   return (
-    <div className="flex-1 h-full bg-background">
+    <div className ="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <div className="max-w-7xl mx-auto p-6">
         <div className="flex items-center space-x-3 mb-8">
           <DollarSign className="w-8 h-8 text-primary" />
           <h1 className="text-3xl font-bold text-gray-900">Financial Advisory</h1>
         </div>
 
-        <div className="grid grid-cols-12 gap-6">
+        <div className="flex">
           {/* Main Content Area */}
           <div className="col-span-12 lg:col-span-8">
-            <Tabs defaultValue="dashboard" className="h-full space-y-6">
-              <TabsList>
+            <Tabs defaultValue="dashboard" className="flex-col  !items-start">
+            
+              <TabsList >
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="chat">AI Advisor</TabsTrigger>
                 <TabsTrigger value="calculators">Financial Tools</TabsTrigger>
                 <TabsTrigger value="reports">Reports</TabsTrigger>
               </TabsList>
+                          
 
-              <TabsContent value="dashboard">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Revenue Trend */}
-                  <Card className="col-span-2">
+              <TabsContent value="dashboard" className="">
+                <div className="flex flex-col">
+                  {/* Revenue Trend - Make it full width */}
+                  <Card className="w-full">
                     <CardHeader>
                       <CardTitle>Revenue Trend</CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[300px]">
+                    <CardContent className="h-[500px] p-4">
                       <ResponsiveContainer width="100%" height="100%">
-                        <RechartsLineChart data={revenueData}>
+                        <RechartsLineChart 
+                          data={revenueData}
+                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        >
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="name" />
                           <YAxis />
                           <Tooltip />
-                          <Line type="monotone" dataKey="value" stroke="#8884d8" />
+                          <Line type="monotone" dataKey="value" stroke="#8884d8" strokeWidth={2} dot={{ r: 4 }}/>
                         </RechartsLineChart>
                       </ResponsiveContainer>
                     </CardContent>
                   </Card>
 
-                  {/* Expense Breakdown */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Expense Breakdown</CardTitle>
-                    </CardHeader>
-                    <CardContent className="h-[300px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RechartsPieChart>
-                          <Pie
-                            data={expenseData}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            outerRadius={80}
-                            fill="#8884d8"
-                            dataKey="value"
-                          >
-                            {expenseData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                        </RechartsPieChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
+                  {/* Create a grid for the smaller cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Expense Breakdown */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Expense Breakdown</CardTitle>
+                      </CardHeader>
+                      <CardContent className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <RechartsPieChart>
+                            <Pie
+                              data={expenseData}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={false}
+                              outerRadius={80}
+                              fill="#8884d8"
+                              dataKey="value"
+                            >
+                              {expenseData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                          </RechartsPieChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
 
-                  {/* Financial Health Score */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Financial Health Score</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-center">
-                        <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-green-100">
-                          <span className="text-3xl font-bold text-green-600">85</span>
+                    {/* Financial Health Score */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Financial Health Score</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-center">
+                          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-green-100">
+                            <span className="text-3xl font-bold text-green-600">85</span>
+                          </div>
+                          <div className="mt-4 space-y-2">
+                            <p className="text-sm text-gray-600">Your business is financially healthy</p>
+                            <Button variant="outline" size="sm">View Details</Button>
+                          </div>
                         </div>
-                        <div className="mt-4 space-y-2">
-                          <p className="text-sm text-gray-600">Your business is financially healthy</p>
-                          <Button variant="outline" size="sm">View Details</Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
               </TabsContent>
 
@@ -429,118 +437,8 @@ const FinanceService = () => {
             </Tabs>
           </div>
 
-          {/* Quick Actions Sidebar */}
-          <div className="col-span-12 lg:col-span-4 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button variant="outline" className="w-full justify-start" onClick={() => setSelectedTool('roi')}>
-                  <Calculator className="w-4 h-4 mr-2" />
-                  ROI Calculator
-                </Button>
-                <Button variant="outline" className="w-full justify-start" onClick={() => setSelectedTool('tax')}>
-                  <Receipt className="w-4 h-4 mr-2" />
-                  Tax Estimator
-                </Button>
-                <Button variant="outline" className="w-full justify-start" onClick={() => setSelectedTool('expenses')}>
-                  <WalletCards className="w-4 h-4 mr-2" />
-                  Expense Tracker
-                </Button>
-                <Button variant="outline" className="w-full justify-start" onClick={() => setSelectedTool('forecast')}>
-                  <TrendingUp className="w-4 h-4 mr-2" />
-                  Financial Forecast
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Financial Insights Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Financial Insights</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="p-4 bg-green-50 rounded-lg">
-                  <div className="flex items-start space-x-3">
-                    <TrendingUp className="w-5 h-5 text-green-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-green-900">Revenue Growth</p>
-                      <p className="text-sm text-green-700">15% increase from last month</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <div className="flex items-start space-x-3">
-                    <WalletCards className="w-5 h-5 text-blue-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-blue-900">Cash Flow Positive</p>
-                      <p className="text-sm text-blue-700">Healthy operating margin</p>
-                    </div>
-                  </div>
-                </div>
-                <Button variant="outline" className="w-full">View All Insights</Button>
-              </CardContent>
-            </Card>
-
-            {/* Tax Calendar */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Tax Calendar</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <BadgeDollarSign className="w-5 h-5 text-yellow-600" />
-                      <div>
-                        <p className="font-medium">Quarterly Tax Due</p>
-                        <p className="text-sm text-gray-600">In 15 days</p>
-                      </div>
-                    </div>
-                    <Button size="sm" variant="outline">
-                      Remind Me
-                    </Button>
-                  </div>
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <Building2 className="w-5 h-5 text-gray-600" />
-                      <div>
-                        <p className="font-medium">Annual Filing</p>
-                        <p className="text-sm text-gray-600">In 3 months</p>
-                      </div>
-                    </div>
-                    <Button size="sm" variant="outline">
-                      Remind Me
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Help & Resources */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Help & Resources</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <Button variant="link" className="w-full justify-start p-0 text-blue-600">
-                    <FileText className="w-4 h-4 mr-2" />
-                    Financial Planning Guide
-                  </Button>
-                  <Button variant="link" className="w-full justify-start p-0 text-blue-600">
-                    <BookOpen className="w-4 h-4 mr-2" />
-                    Tax Preparation Checklist
-                  </Button>
-                  <Button variant="link" className="w-full justify-start p-0 text-blue-600">
-                    <BadgeDollarSign className="w-4 h-4 mr-2" />
-                    Small Business Grants
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          
+          
         </div>
       </div>
     </div>
