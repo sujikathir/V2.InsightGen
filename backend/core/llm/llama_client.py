@@ -14,7 +14,15 @@ class LlamaClient:
         if not api_key:
             raise ValueError("GROQ_API_KEY environment variable is not set")
         self.client = AsyncGroq(api_key=api_key)
-        self.model = "llama3-70b-8192"  # Using a more powerful model if available
+        self.model = "llama3-70b-8192"
+        
+        self.model_map = {
+            "sql": "llama3-70b-8192",
+            "chat": "llama3-70b-8192",
+            # Add more service-specific models if needed
+            # "vision": "llama-3.2-90b-vision-preview",
+            # "tool": "llama3-groq-70b-8192-tool-use-preview"
+        }
         
     async def get_completion(
         self,

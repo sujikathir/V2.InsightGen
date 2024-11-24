@@ -1,6 +1,6 @@
 # backend/api/routes/service_routes/legal_routes.py
 from fastapi import APIRouter, HTTPException, UploadFile, File
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 import logging
 from fastapi.responses import JSONResponse
@@ -11,14 +11,31 @@ router = APIRouter()
 from api.services.chatbot_services import LegalChatbotService
 
 class LegalQueryRequest(BaseModel):
-    query: str
-    document_content: Optional[str] = None
+    message: str
+    service_type: str = "legal"
+    context: Dict[str, Any] = Field(default_factory=dict)
+    chat_history: List[Dict[str, str]] = Field(default_factory=list)
+    connection_id: str = Field(...)
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "message": "What is this document about?",
+                "service_type": "legal",
+                "context": {"document_id": "some-uuid"},
+                "chat_history": [],
+                "connection_id": "some-connection-id"
+            }
+        }
 
 @router.post("/legal-chat")
 async def legal_chat(request: LegalQueryRequest):
     try:
         chatbot = LegalChatbotService()
-        response = await chatbot.process_query(request.query, request.document_content)
+        response = await chatbot.process_query(
+            message=request.message,
+            context=request.context
+        )
         return response
     except Exception as e:
         logger.error(f"Legal chat error: {e}")
