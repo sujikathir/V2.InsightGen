@@ -187,10 +187,10 @@ async def analyze_document(document_id: str):
 async def document_chat(chat_request: ChatRequest):
     """Chat with a document"""
     try:
-        # Get document content
+        # Add logging
+        logger.info(f"Retrieving document: {chat_request.document_id}")
         document = await document_handler.get_document(chat_request.document_id)
-        if not document:
-            raise HTTPException(status_code=404, detail="Document not found")
+        logger.info(f"Retrieved document content: {document.get('content', {})[:200]}...")
 
         # Extract text content, handling different possible structures
         content = document.get('content', {})

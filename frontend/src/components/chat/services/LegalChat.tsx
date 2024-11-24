@@ -1,4 +1,3 @@
-// src/components/chat/services/LegalChat.tsx
 import React, { useState, useRef } from 'react';
 import { Scale, Upload, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import ChatInterface from '../base/ChatInterface';
 import { uploadLegalDocument, analyzeLegalDocument, sendLegalChatMessage } from '@/services/api/legal';
+import { ChatMessage } from '@/types/chat';
 
 interface LegalChatProps {
   className?: string;
@@ -16,10 +16,12 @@ const LegalChat: React.FC<LegalChatProps> = ({ className }) => {
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [fileName, setFileName] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    console.log('File selected:', file);
     if (!file) return;
 
     setUploadStatus('uploading');
@@ -35,7 +37,6 @@ const LegalChat: React.FC<LegalChatProps> = ({ className }) => {
       setDocumentId(uploadResult.id);
       setUploadStatus('success');
 
-      // Analyze the document
       try {
         const analysisResult = await analyzeLegalDocument(uploadResult.id);
         console.log('Analysis result:', analysisResult);
@@ -57,14 +58,24 @@ const LegalChat: React.FC<LegalChatProps> = ({ className }) => {
     }
     
     try {
-      const response = await sendLegalChatMessage(message, documentId);
-      if (!response.content) {
-        throw new Error('Invalid response from chat service');
-      }
+      console.log('Sending message:', message, 'for document:', documentId);
+      const response = await sendLegalChatMessage(
+        message, 
+        documentId,
+        chatHistory
+      );
+      
+      // Update chat history
+      setChatHistory(prev => [
+        ...prev,
+        { role: 'user', content: message },
+        { role: 'assistant', content: response.answer }
+      ]);
+      
       return response;
     } catch (error) {
       console.error('Chat error:', error);
-      throw new Error(error instanceof Error ? error.message : 'Failed to send message');
+      throw error;
     }
   };
 
@@ -98,29 +109,53 @@ Once you upload a document, I'll analyze it and answer your questions.`;
               <Scale className="w-5 h-5" />
               Legal Document Analysis
             </CardTitle>
-            <Button 
-              variant="outline" 
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadStatus === 'uploading'}
-            >
-              {uploadStatus === 'uploading' ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : (
-                <Upload className="w-4 h-4 mr-2" />
-              )}
-              Upload Document
-            </Button>
+            <div className="flex items-center gap-2">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  console.log('File selected:', file);
+                  if (!file) return;
+
+                  setUploadStatus('uploading');
+                  setFileName(file.name);
+                  
+                  try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    const uploadResult = await uploadLegalDocument(file);
+                    console.log('Upload result:', uploadResult);
+                    
+                    setDocumentId(uploadResult.id);
+                    setUploadStatus('success');
+                  } catch (error) {
+                    console.error('Upload error:', error);
+                    setUploadStatus('error');
+                  }
+                }}
+                className="hidden"
+                accept=".pdf,.doc,.docx,.txt"
+              />
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  console.log("Upload button clicked");
+                  fileInputRef.current?.click();
+                }}
+                disabled={uploadStatus === 'uploading'}
+              >
+                {uploadStatus === 'uploading' ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <Upload className="w-4 h-4 mr-2" />
+                )}
+                Upload Document
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            onChange={handleFileUpload}
-            accept=".pdf,.doc,.docx,.txt"
-          />
-          
           {uploadStatus !== 'idle' && (
             <Alert className="mb-4">
               <AlertDescription>
@@ -147,7 +182,6 @@ Once you upload a document, I'll analyze it and answer your questions.`;
                 <p className="text-sm text-gray-600">
                   Currently analyzing: {fileName}
                 </p>
-                {/* Add more document details/insights here */}
               </CardContent>
             </Card>
           ) : null

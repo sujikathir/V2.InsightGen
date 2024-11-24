@@ -9,6 +9,7 @@ from api.routes.service_routes.legal_routes import router as legal_router
 import os
 from dotenv import load_dotenv
 import logging
+from api.routes.service_routes import document_routes, legal_routes
 
 # Configure logger
 logging.basicConfig(level=logging.INFO)
@@ -22,11 +23,10 @@ app = FastAPI()
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Vite's default port
+    allow_origins=["http://localhost:5173"],  # Add your frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"]
 )
 
 # MongoDB connection setup
@@ -57,12 +57,9 @@ app.include_router(
 # Include the router with a prefix
 app.include_router(chat_routes.router, prefix="/api/v1")
 
-# Add this with your other router includes
-app.include_router(
-    legal_router,
-    prefix="/api/v1/legal",
-    tags=["legal"]
-)
+# Include routes with proper prefixes
+app.include_router(document_routes)
+app.include_router(legal_routes)
 
 # Add a test route
 @app.get("/")

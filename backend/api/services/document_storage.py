@@ -28,6 +28,11 @@ class DocumentStorage:
             elif isinstance(content, dict) and "text" not in content:
                 content["text"] = ""
 
+            # Add debug logging
+            logger.debug(f"Saving document with metadata: {metadata}")
+            logger.debug(f"File path: {file_path}")
+            logger.debug(f"File type: {file_type}")
+
             document = {
                 "_id": metadata.get('id'),
                 "content": content,

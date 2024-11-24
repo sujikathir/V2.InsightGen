@@ -201,7 +201,7 @@ const FinanceService = () => {
           <div className="col-span-12 lg:col-span-8 space-y-6">
             <Card className="border-0 shadow-lg">
               <CardContent className="p-6">
-                <Tabs defaultValue="dashboard" className="space-y-6">
+                <Tabs defaultValue="dashboard" className="flex-col !items-start">
                   <TabsList className="w-full justify-start bg-gradient-to-r from-blue-500/10 to-purple-500/10 p-1">
                     <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                     <TabsTrigger value="chat">AI Advisor</TabsTrigger>
@@ -210,7 +210,7 @@ const FinanceService = () => {
                   </TabsList>
 
                   <TabsContent value="dashboard" className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex flex-col">
                       {/* Revenue Trend */}
                       <Card className="col-span-2">
                         <CardHeader>

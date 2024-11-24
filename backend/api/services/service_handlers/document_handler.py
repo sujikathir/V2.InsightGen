@@ -31,84 +31,44 @@ class DocumentHandler(BaseService):
         try:
             document_id = context.get('document_id')
             if not document_id:
-                raise ValueError("Document ID is required")
+                return {
+                    "error": "Document not found",
+                    "message": "Please upload a document first"
+                }
 
-            # First process the document if it's a new upload
-            if context.get('file_path'):
-                # Process new document
-                document_content = await self.doc_processor.process_document(
-                    file_path=context.get('file_path'),
-                    file_type=context.get('file_type', 'txt'),
-                    extraction_type='text'
-                )
-                
-                # Save to storage if it's a new document
-                await self.storage.save_document(
-                    content=document_content,
-                    file_path=context.get('file_path'),
-                    file_type=context.get('file_type', 'txt'),
-                    metadata={
-                        "processed_at": datetime.utcnow(),
-                        "source": context.get('source', 'upload'),
-                        "service_type": context.get('service_type', 'general')
-                    }
-                )
-            else:
-                # Get existing document content
-                document_content = await self._get_document_content(document_id)
-                if not document_content:
-                    raise ValueError(f"Document not found: {document_id}")
+            # Get document content
+            doc_info = await self.get_document_content(document_id)
+            
+            # Get relevant chunks for the query
+            relevant_chunks = await self.doc_processor.get_relevant_chunks(
+                query=message,
+                k=3
+            )
 
-            # Process with chat service for analysis
-            chat_response = await self.chat_service.process_chat(
+            # Combine chunks into context
+            context = "\n\n".join([chunk["content"] for chunk in relevant_chunks])
+
+            # Generic document analysis
+            response = await self.chat_service.process_chat(
                 query=message,
                 mode='document',
                 document_id=document_id,
                 chat_history=chat_history
             )
 
-            # Combine document insights with chat response
-            response = {
-                "answer": chat_response.get("answer", ""),
-                "content": document_content.get("content", ""),
-                "metadata": document_content.get("metadata", {}),
-                "insights": {
-                    "summary": document_content.get("analysis", {}).get("summary", ""),
-                    "key_points": document_content.get("analysis", {}).get("key_points", []),
-                    "entities": document_content.get("analysis", {}).get("entities", []),
-                    "chat_insights": chat_response.get("insights", {})
-                },
-                "relevant_sections": await self._extract_relevant_sections(
-                    document_content.get("content", ""),
-                    message
-                ),
-                "source_metadata": {
+            return {
+                "answer": response.get("answer", ""),
+                "insights": doc_info.get('analysis', {}),
+                "metadata": {
                     "document_id": document_id,
-                    "file_type": context.get('file_type'),
-                    "processed_at": document_content.get("metadata", {}).get("processed_at")
+                    "chunks_used": len(relevant_chunks),
+                    "document_type": "generic"
                 }
             }
 
-            # Add format-specific data
-            if context.get('file_type') in ['csv', 'xlsx']:
-                response["data_analysis"] = {
-                    "statistics": document_content.get("statistics", {}),
-                    "preview": document_content.get("preview", {})
-                }
-            elif context.get('file_type') in ['docx', 'pdf']:
-                response["document_structure"] = {
-                    "sections": document_content.get("structure", {}),
-                    "tables": document_content.get("tables", [])
-                }
-
-            # Store the chat interaction
-            await self._store_chat_interaction(document_id, message, response)
-
-            return response
-
         except Exception as e:
             logger.error(f"Error in document handler: {e}")
-            raise Exception(f"Error processing document query: {str(e)}")
+            raise
 
     async def upload_document(
         self,
@@ -388,15 +348,42 @@ class DocumentHandler(BaseService):
 
     async def _detect_document_type(self, content: str) -> str:
         try:
-            response = await self.chat_service.process_chat(
-                query="What type of legal document is this?",
-                document_content=content,
-                mode="document_chat"
-            )
-            return response.get("answer", "Unknown")
+            # Add debug logging
+            logger.debug(f"Content preview for type detection: {content[:500]}")
+            
+            # Basic keyword detection
+            content_lower = content.lower()
+            
+            # Define document type indicators
+            indicators = {
+                "lease_agreement": ["lease", "tenant", "landlord", "rent", "property"],
+                "contract": ["agreement", "parties", "terms", "conditions"],
+                "tax_document": ["tax", "irs", "return", "deduction"],
+                "court_filing": ["court", "plaintiff", "defendant", "jurisdiction"]
+            }
+            
+            # Score each document type
+            scores = {
+                doc_type: sum(1 for keyword in keywords if keyword in content_lower)
+                for doc_type, keywords in indicators.items()
+            }
+            
+            logger.debug(f"Document type scores: {scores}")
+            
+            # Get the type with highest score
+            if scores:
+                max_score = max(scores.values())
+                if max_score > 0:
+                    doc_type = max(scores.items(), key=lambda x: x[1])[0]
+                    logger.info(f"Detected document type: {doc_type} with score {max_score}")
+                    return doc_type
+            
+            logger.warning("Could not determine document type, defaulting to unknown")
+            return "unknown"
+            
         except Exception as e:
             logger.error(f"Error detecting document type: {e}")
-            return "Unknown"
+            return "unknown"
 
     async def get_document(self, document_id: str) -> Optional[Dict[str, Any]]:
         """

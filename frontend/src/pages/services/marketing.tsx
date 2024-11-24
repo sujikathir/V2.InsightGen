@@ -129,7 +129,7 @@ const MarketingService = () => {
         <div className="grid grid-cols-12 gap-6">
           {/* Main Content Area */}
           <div className="col-span-12 lg:col-span-8">
-            <Tabs defaultValue="dashboard" className="h-full space-y-6">
+            <Tabs defaultValue="dashboard" className="flex-col !items-start">
               <TabsList>
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
@@ -138,7 +138,7 @@ const MarketingService = () => {
               </TabsList>
 
               <TabsContent value="dashboard">
-                <div className="grid gap-6">
+                <div className="flex flex-col">
                   {/* Overview Cards */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <Card>

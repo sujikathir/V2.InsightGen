@@ -19,6 +19,7 @@ class LlamaClient:
         self.model_map = {
             "sql": "llama3-70b-8192",
             "chat": "llama3-70b-8192",
+            "document_analysis": "llama3-70b-8192",
             # Add more service-specific models if needed
             # "vision": "llama-3.2-90b-vision-preview",
             # "tool": "llama3-groq-70b-8192-tool-use-preview"
@@ -157,3 +158,57 @@ IMPORTANT RULES:
             sql = f"{sql.rstrip(';')}\nLIMIT 100;"
             
         return sql
+
+    async def analyze_document(
+        self,
+        query: str,
+        context: str,
+        document_type: str = "unknown",
+        temperature: float = 0.3
+    ) -> str:
+        """Analyze document with appropriate prompting"""
+        try:
+            system_prompts = {
+                "lease_agreement": """You are a precise lease agreement analyzer. Focus on:
+1. Identifying key parties, terms, and conditions
+2. Extracting important dates and deadlines
+3. Highlighting financial obligations
+4. Noting special conditions or requirements""",
+                
+                "legal_filing": """You are a precise legal document analyzer. Focus on:
+1. Case details and parties involved
+2. Legal claims and arguments
+3. Relief sought or demands
+4. Relevant dates and deadlines""",
+                
+                "unknown": """You are a precise document analyzer. Your task is to:
+1. Carefully analyze the provided document context
+2. Answer questions based ONLY on the information present
+3. If information isn't in the document, clearly state that
+4. Use specific quotes or references to support your answers"""
+            }
+            
+            system_prompt = system_prompts.get(document_type, system_prompts["unknown"])
+            
+            prompt = f"""Document Context:
+{context}
+
+Question: {query}
+
+Instructions:
+1. Base your response only on the provided document context
+2. Be specific and cite relevant parts of the document
+3. If information is not in the document, say so clearly
+4. Format your response with clear sections and bullet points"""
+
+            return await self.get_completion(
+                prompt=prompt,
+                system_prompt=system_prompt,
+                temperature=temperature,
+                max_tokens=512,
+                model=self.model_map["document_analysis"]
+            )
+
+        except Exception as e:
+            logger.error(f"Error analyzing document: {e}")
+            raise

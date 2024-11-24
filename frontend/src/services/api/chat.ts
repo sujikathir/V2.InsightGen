@@ -18,3 +18,8 @@ export const chatApi = {
    return response.json();
  }
 };
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}

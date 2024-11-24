@@ -89,7 +89,21 @@ class RAGRetriever:
     async def process_document(self, document_id: str, content: str) -> None:
         """Process and store document content in vector store"""
         try:
+            logger.info(f"Processing document {document_id}, content length: {len(str(content))}")
+            logger.debug(f"Content preview: {str(content)[:500]}")
+            
+            if not content:
+                logger.error("Empty content provided")
+                return
+                
+            if isinstance(content, dict):
+                # Extract actual content if it's nested in a dict
+                content = content.get("content", "") or content.get("text", "")
+                logger.info(f"Extracted content from dict, new length: {len(content)}")
+
             chunks = self.text_splitter.split_text(content)
+            logger.info(f"Split content into {len(chunks)} chunks")
+            
             texts_with_metadata = [
                 {"content": chunk, "document_id": document_id, "chunk_id": i}
                 for i, chunk in enumerate(chunks)
@@ -97,11 +111,15 @@ class RAGRetriever:
             
             # Initialize or update vector store
             embeddings = await self.embeddings.embed_documents([t["content"] for t in texts_with_metadata])
+            logger.info(f"Generated {len(embeddings)} embeddings")
+            
             self.vector_store = Chroma.from_embeddings(
                 embeddings=embeddings,
                 texts=[t["content"] for t in texts_with_metadata],
                 metadatas=texts_with_metadata
             )
+            
+            logger.info("Successfully stored document in vector store")
             
         except Exception as e:
             logger.error(f"Error processing document: {e}")
@@ -111,17 +129,30 @@ class RAGRetriever:
         """Retrieve relevant document chunks for a query"""
         try:
             if not self.vector_store:
+                logger.warning("Vector store not initialized")
                 return []
             
+            logger.info(f"Retrieving chunks for query: {query}")
             query_embedding = await self.embeddings.embed_query(query)
-            results = self.vector_store.similarity_search_by_vector(query_embedding, k=k)
-            return [
+            
+            results = self.vector_store.similarity_search_with_scores(
+                query,
+                k=k
+            )
+            
+            chunks = [
                 {
                     "content": doc.page_content,
-                    "metadata": doc.metadata
+                    "metadata": doc.metadata,
+                    "score": score
                 }
-                for doc in results
+                for doc, score in results
             ]
+            
+            logger.info(f"Retrieved {len(chunks)} chunks")
+            logger.debug(f"Chunks preview: {str(chunks)[:500]}")
+            
+            return chunks
             
         except Exception as e:
             logger.error(f"Error retrieving chunks: {e}")

@@ -158,3 +158,25 @@ async def analyze_document(document_id: str):
     except Exception as e:
         logger.error(f"Analysis error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+@router.get("/debug/document/{document_id}")
+async def debug_document(document_id: str):
+    """Debug endpoint to check document content"""
+    try:
+        document_service = DocumentService()
+        content = await document_service.get_document_content(document_id)
+        metadata = await document_service.get_document_metadata(document_id)
+        
+        # Test document identification
+        handler = LegalHandler()
+        doc_type = handler._identify_document_type(content)
+        
+        return {
+            "metadata": metadata,
+            "content_preview": str(content)[:1000] if content else None,
+            "content_length": len(str(content)) if content else 0,
+            "identified_type": doc_type
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
