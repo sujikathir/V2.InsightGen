@@ -129,7 +129,7 @@ const MarketingService = () => {
         <div className="grid grid-cols-12 gap-6">
           {/* Main Content Area */}
           <div className="col-span-12 lg:col-span-8">
-            <Tabs defaultValue="dashboard" className="h-full space-y-6">
+            <Tabs defaultValue="dashboard" className="flex-col  !items-start space-y-6">
               <TabsList>
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="campaigns">Campaigns</TabsTrigger>

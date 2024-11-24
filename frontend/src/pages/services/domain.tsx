@@ -192,7 +192,7 @@ const DomainService = () => {
                   )}
 
                   {!loading && suggestions.length > 0 && (
-                    <Tabs defaultValue="all" className="w-full">
+                    <Tabs defaultValue="all" className="flex-col  !items-start">
                       <TabsList className="w-full justify-start mb-4">
                         <TabsTrigger value="all">All Domains</TabsTrigger>
                         <TabsTrigger value="available">Available</TabsTrigger>
@@ -231,8 +231,8 @@ const DomainService = () => {
             </Card>
 
             {selectedDomain && (
-              <Card>
-                <CardHeader className="p-4 md:p-6">
+              <Card className="flex-col  !items-end">
+                <CardHeader className="p-4  flex-col  !items-end">
                   <CardTitle>Selected Domain</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 md:p-6 pt-0">
