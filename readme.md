@@ -1,5 +1,7 @@
 frontend/
+
 src/
+
 ├── components/
 │   ├── chat/
 │   │   ├── base/
