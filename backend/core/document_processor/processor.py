@@ -24,6 +24,9 @@ import yaml
 from langdetect import detect
 import spacy
 import logging
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.vectorstores import FAISS
+from langchain.embeddings import HuggingFaceEmbeddings
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +35,17 @@ class DocumentProcessor:
         self.processors = {}
         self.reader = easyocr.Reader(['en'])
         self.nlp = spacy.load("en_core_web_sm")
+        
+        self.text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200,
+            length_function=len,
+        )
+        self.embeddings = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-mpnet-base-v2"
+        )
+        self.vector_store = None
+        
         try:
             self.reader = easyocr.Reader(['en'])  # Initialize EasyOCR
         except Exception as e:
@@ -50,6 +64,8 @@ class DocumentProcessor:
                 "status": "ready"
             }
         }
+        
+        self.document_cache = {}  # Add document cache
         
     async def _process_image(self, file_path: str, extraction_type: str) -> Dict[str, Any]:
         """Process image files with OCR"""
@@ -210,35 +226,64 @@ class DocumentProcessor:
         self,
         file_path: str,
         file_type: str,
-        extraction_type: str = "text",
-        options: Dict[str, Any] = None
+        extraction_type: str = "text"
     ) -> Dict[str, Any]:
-        """Process document based on type and extraction needs"""
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"File not found: {file_path}")
-
-        processors = {
-            "pdf": self._process_pdf,
-            "jpg": self._process_image,
-            "jpeg": self._process_image,
-            "png": self._process_image,
-            "docx": self._process_docx,
-            "doc": self._process_docx,
-            "txt": self._process_text,
-            "csv": self._process_csv,
-            "json": self._process_json,
-            "xml": self._process_xml,
-            "yaml": self._process_yaml,
-            "yml": self._process_yaml,
-            "xlsx": self._process_xlsx,  # Add this line
-            "xls": self._process_xlsx    # Add this line for older Excel files
-        }
-        
-        processor = processors.get(file_type.lower())
-        if not processor:
-            raise ValueError(f"Unsupported file type: {file_type}")
+        """Process document and prepare for analysis"""
+        try:
+            # Process document using existing type-specific processors
+            result = await self._process_file_by_type(file_path, file_type, extraction_type)
             
-        return await processor(file_path, extraction_type)
+            if not result.get("content"):
+                raise ValueError("No content extracted from document")
+
+            # Split text into chunks for vector store
+            text_content = result["content"]
+            if isinstance(text_content, list):
+                # Handle DOCX content which might be a list of paragraphs
+                text_content = " ".join([p.get("text", "") if isinstance(p, dict) else str(p) 
+                                      for p in text_content])
+            
+            chunks = self.text_splitter.split_text(text_content)
+            logger.info(f"Split into {len(chunks)} chunks")
+
+            # Create vector store
+            self.vector_store = FAISS.from_texts(
+                texts=chunks,
+                embedding=self.embeddings
+            )
+
+            # Update result with chunks
+            result.update({
+                "chunks": chunks,
+                "file_type": file_type,
+                "file_path": file_path
+            })
+            
+            # Cache the result
+            self.document_cache[file_path] = result
+            
+            return result
+
+        except Exception as e:
+            logger.error(f"Error processing document: {e}")
+            raise
+
+    async def get_relevant_chunks(self, query: str, k: int = 3) -> List[Dict[str, Any]]:
+        """Get relevant chunks for the query"""
+        if not self.vector_store:
+            raise ValueError("Vector store not initialized. Process a document first.")
+
+        try:
+            docs = self.vector_store.similarity_search(query, k=k)
+            return [{"content": doc.page_content, "metadata": doc.metadata} for doc in docs]
+        except Exception as e:
+            logger.error(f"Error getting relevant chunks: {e}")
+            raise
+
+    def clear_cache(self):
+        """Clear the document cache and vector store"""
+        self.document_cache.clear()
+        self.vector_store = None
     
     async def _process_docx(self, file_path: str, extraction_type: str) -> Dict[str, Any]:
         """Process Word documents"""

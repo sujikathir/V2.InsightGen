@@ -1,5 +1,5 @@
 # backend/api/services/service_handlers/registration_handler.py
-from ...services.base_handler import BaseHandler
+from .base_handler import BaseHandler
 from typing import Dict, List, Any
 import logging
 

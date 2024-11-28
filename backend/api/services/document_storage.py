@@ -2,6 +2,7 @@
 from typing import Dict, Any, Optional
 import motor.motor_asyncio
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -21,15 +22,29 @@ class DocumentStorage:
     ) -> None:
         """Save document content and metadata to storage"""
         try:
-            # Use the UUID as a string ID
+            # Ensure content has text field
+            if isinstance(content, str):
+                content = {"text": content}
+            elif isinstance(content, dict) and "text" not in content:
+                content["text"] = ""
+
+            # Add debug logging
+            logger.debug(f"Saving document with metadata: {metadata}")
+            logger.debug(f"File path: {file_path}")
+            logger.debug(f"File type: {file_type}")
+
             document = {
-                "_id": metadata.get('id'),  # Use the UUID string directly
+                "_id": metadata.get('id'),
                 "content": content,
                 "file_path": file_path,
                 "file_type": file_type,
-                "metadata": metadata
+                "metadata": metadata,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
             }
+
             await self.collection.insert_one(document)
+            logger.info(f"Document saved successfully: {metadata.get('id')}")
         except Exception as e:
             logger.error(f"Error saving document: {e}")
             raise

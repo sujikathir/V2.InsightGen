@@ -74,3 +74,74 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* New component styles */
+@layer components {
+  .dashboard-layout {
+    @apply grid grid-cols-12 gap-6 w-full;
+  }
+
+  .main-content {
+    @apply col-span-12 lg:col-span-8;
+  }
+
+  .sidebar-content {
+    @apply col-span-12 lg:col-span-4;
+  }
+
+  .dashboard-card {
+    @apply w-full h-full;
+  }
+
+  .dashboard-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+  }
+
+  .tabs-content {
+    @apply w-full;
+  }
+
+  .tab-panel {
+    @apply w-full;
+  }
+
+  .recharts-wrapper {
+    @apply w-full;
+  }
+
+  .card-content {
+    @apply w-full flex flex-col;
+  }
+
+  .grid-layout {
+    @apply w-full grid gap-6;
+  }
+}
+
+/* Keep existing animations */
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+.animate-blob {
+  animation: blob 7s infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}

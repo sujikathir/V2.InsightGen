@@ -1,4 +1,4 @@
-# File Path: smallbusiness/backend/core/sql_processor/processor.py
+# File Path: insightgen/backend/core/sql_processor/processor.py
 
 from typing import Dict, Any, List, Optional, Tuple
 import sqlalchemy
@@ -13,16 +13,13 @@ import json
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from decimal import Decimal
 
 logger = logging.getLogger(__name__)
 
-class CustomJSONEncoder(json.JSONEncoder):
+class DateTimeEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, datetime):
             return obj.isoformat()
-        if isinstance(obj, Decimal):
-            return str(obj)
         return super().default(obj)
 
 class SQLProcessor:
@@ -152,14 +149,12 @@ class SQLProcessor:
                     columns = result.keys()
                     rows = []
                     for row in result:
-                        # Convert row to dict and handle serialization
+                        # Convert row to dict and handle datetime serialization
                         row_dict = {}
                         for col in columns:
                             value = getattr(row, col)
                             if isinstance(value, datetime):
                                 value = value.isoformat()
-                            elif isinstance(value, Decimal):
-                                value = str(value)
                             row_dict[col] = value
                         rows.append(row_dict)
                     
